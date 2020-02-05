@@ -1,96 +1,51 @@
 #include "../include/Collection.h"
+#include "../include/rapidjson/prettywriter.h"
 
-Collection::Collection(std::string _name) { name = _name; }
-Collection::Collection(std::string _name, std::vector<Object> _objects) { name = _name; objects = _objects; }
+Collection::Collection(const char* _name)
+{
+    name = _name;
+}
+Collection::Collection(const char* _name, const char* _objectsJSON)
+{
+    name = _name;
+
+    objects.Parse(_objectsJSON);
+
+    if (!objects.IsArray())
+    {
+        printf("JSON is not of an array type");
+        objects.Clear();
+    }
+}
 
 std::string Collection::getName()
 {
-    return name; 
+    return name;
 }
 
-std::vector<Object> Collection::getObjects()
+const char* Collection::getObjects()
 {
-    return objects;
+    rapidjson::StringBuffer sb;
+    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb);
+    objects.Accept(writer);
+    return sb.GetString();
 }
 
-bool Collection::addObject(Object _object)
+bool Collection::addObject(const char* _objectJSON)
 {
-    // Add missing fields to the schema; check for type mismatches
-    // !!! Missing case: duplicate fields of the same type !!!
-    for (int k = 0; k < _object.getFields().size(); k++)
-    {
-        bool fieldFound = false;
+    rapidjson::Document doc;
+    doc.Parse(_objectJSON);
+    if (!doc.IsObject())
+        return false;
 
-        for (int j = 0; j < schema.getFields().size(); j++)
-        {
-            // Field found on the schema
-            if (_object.getFields()[k].name == schema.getFields()[j].name)
-            {
-                // Type mismatch
-                if (_object.getFields()[k].type != schema.getFields()[j].type)
-                    return false;
-
-                fieldFound = true;
-            }
-        }
-
-        if (!fieldFound)
-        {
-            Field newField = _object.getFields()[k];
-            newField.value = "";
-            schema.addField(newField);
-        }
-    }
-
-    objects.push_back(_object);
+    objects.GetArray().PushBack(doc.GetObject(), objects.GetAllocator());
     return true;
 }
 
-bool Collection::addObjects(std::vector<Object> _objects)
+void Collection::printMembers()
 {
-    bool isSuccess = true;
-
-    for (int i = 0; i < _objects.size(); i++)
+    for(rapidjson::Value::ConstMemberIterator iter = objects.Begin()->MemberBegin(); iter != objects.Begin()->MemberEnd(); iter++)
     {
-        isSuccess &= addObject(_objects[i]);
+        printf("%s\n", iter->name.GetString());
     }
-
-    return isSuccess;
-}
-
-std::string Collection::toString()
-{
-    std::string collectionJSON = "{\n";
-
-    for (int i = 0; i < objects.size(); i++)
-    {
-        collectionJSON += "{\n\t";
-        for (int j = 0; j < schema.getFields().size(); j++)
-        {
-            Field currentField = schema.getFields()[j];
-            for (int k = 0; k < objects[i].getFields().size(); k++)
-            {
-                if (objects[i].getFields()[k].name == currentField.name)
-                {
-                    currentField.value = objects[i].getFields()[k].value;
-                    break;
-                }
-            }
-
-            collectionJSON += currentField.toString();
-
-            if (j != schema.getFields().size() - 1)
-                collectionJSON += ",\n\t";
-        }
-        collectionJSON += "\n}";
-
-        if (i != objects.size() - 1)
-        {
-            collectionJSON += ",\n";
-        }
-    }
-    
-    collectionJSON += "\n}";
-
-    return collectionJSON;
 }

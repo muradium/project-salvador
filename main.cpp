@@ -1,28 +1,42 @@
 #include <iostream>
 #include <cstdlib>
 #include "include/Collection.h"
+#include "include/rapidjson/document.h"
+#include "include/rapidjson/prettywriter.h"
+
+using namespace rapidjson;
 
 int main()
 {
-    Collection myCollection("Users");
-    std::cout<<"\""<<myCollection.getName()<<"\" collection added\n\n";
-    
-    Field name("Name", "Murad", "String");
-    Field surname("Surname", "Talibov", "String");
-    Field age("Age", "21", "Int32");
+    const char* json = {R"([
+    {
+        "Name": "Murad",
+        "Surname": "Talibov",
+        "Age": "21",
+        "Gender": ""
+    },
+    {
+        "Name": "Jane",
+        "Surname": "",
+        "Age": "",
+        "Gender": "Female"
+    }
+])"};
 
-    Object me(std::vector<Field>{ name, surname, age });
-    myCollection.addObject(me);
+    Collection myCollection("users", json);
 
-    std::cout<<myCollection.toString()<<"\n\n";
+    myCollection.printMembers();
 
-    Field name2("Name", "Jane", "String");
-    Field gender("Gender", "Female", "String");
+    const char* newJSON = {R"(
+    {
+        "Name": "Behlul",
+        "Surname": "Hesenli"
+    }
+)"};
 
-    Object girl(std::vector<Field>{ name2, gender });
-    myCollection.addObject(girl);
+    myCollection.addObject(newJSON);
 
-    std::cout<<myCollection.toString()<<std::endl;
+    puts(myCollection.getObjects());
 
     system("PAUSE");
     return 0;

@@ -1,22 +1,20 @@
 #include <iostream>
 #include <vector>
-#include "../include/Object.h"
+// #include "../include/Object.h"
+#include "../include/rapidjson/document.h"
 
 class Collection
 {
   private:
     std::string name;
-    std::vector<Object> objects;
-    Object schema;
+    rapidjson::Document objects;
 
   public:
-    Collection(std::string _name);
-    Collection(std::string _name, std::vector<Object> _objects);
+    Collection(const char* _name);
+    Collection(const char* _name, const char* _objectsJSON);
 
     std::string getName();
-    std::vector<Object> getObjects();
-    bool addObject(Object _object);
-    bool addObjects(std::vector<Object> _objects);
-    // bool addObjects(std::string objectsJSON);
-    std::string toString();
+    const char* getObjects();
+    void printMembers();
+    bool addObject(const char* _objectJSON);
 };
